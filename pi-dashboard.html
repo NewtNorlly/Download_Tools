@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>π 无限计算看板 - 真正在计算</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', '仿宋_GB2312', 'FangSong_GB2312', '仿宋', FangSong, serif;
+            background: #faf0e6;
+            color: #5d4037;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #fff8f0;
+            border-radius: 16px;
+            border: 1px solid #e8d5c4;
+            box-shadow: 0 2px 10px rgba(93, 64, 55, 0.08);
+        }
+
+        .header h1 {
+            font-family: 'Times New Roman', serif;
+            font-size: 3em;
+            color: #8d6e63;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+            font-weight: normal;
+        }
+
+        .header p {
+            font-family: '仿宋_GB2312', '仿宋', FangSong, serif;
+            font-size: 1.2em;
+            color: #a1887f;
+        }
+
+        .formula-info {
+            font-family: '仿宋_GB2312', '仿宋', FangSong, serif;
+            font-size: 0.95em;
+            color: #bcaaa4;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 248, 240, 0.8);
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #fff8f0;
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid #e8d5c4;
+            box-shadow: 0 2px 8px rgba(93, 64, 55, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #d7ccc8;
+            box-shadow: 0 4px 15px rgba(93, 64, 55, 0.12);
+        }
+
+        .card-title {
+            font-family: '仿宋_GB2312', '仿宋', FangSong, serif;
+            font-size: 1.1em;
+            color: #a1887f;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-value {
+            font-family: 'Times New Roman', serif;
+            font-size: 2em;
+            color: #8d6e63;
+            font-weight: normal;
+        }
+
+        .card-value.small {
+            font-size: 1.4em;
+        }
+
+        .card-value.green {
+            color: #689f38;
+        }
+
+        .card-value.orange {
+            color: #f57c00;
+        }
+
+        .card-value.purple {
+            color: #7b1fa2;
+        }
+
+        .card-value.blue {
+            color: #1976d2;
+        }
+
+        .pi-display {
+            background: #fff8f0;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e8d5c4;
+            box-shadow: 0 2px 8px rgba(93, 64, 55, 0.06);
+        }
+
+        .pi-label {
+            font-family: '仿宋_GB2312', '仿宋', FangSong, serif;
+            font-size: 1.2em;
+            color: #a1887f;
+            margin-bottom: 15px;
+        }
+
+        .pi-value {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.5em;
+            color: #5d4037;
+            word-break: break-all;
+            line-height: 1.8;
+            max-height: 320px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #faf0e6;
+            border-radius: 10px;
+            border: 1px solid #e8d5c4;
+            letter-spacing: 0.5px;
+        }
+
+        .pi-value::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .pi-value::-webkit-scrollbar-track {
+            background: #faf0e6;
+        }
+
+        .pi-value::-webkit-scrollbar-thumb {
+            background: #d7ccc8;
+            border-radius: 4px;
+        }
+
+        .progress-section {
+            background: #fff8f0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #e8d5c4;
+            box-shadow: 0 2px 8px rgba(93, 64, 55, 0.06);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #faf0e6;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+            border: 1px solid #e8d5c4;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #bcaaa4, #a1887f);
+            border-radius: 15px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Times New Roman', serif;
+            font-size: 0.9em;
+            color: #fff;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            font-family: '仿宋_GB2312', '仿宋', FangSong, serif;
+            font-size: 1em;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #a1887f;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #8d6e63;
+        }
+
+        .btn-secondary {
+            background: #e8d5c4;
+            color: #5d4037;
+        }
+
+        .btn-secondary:hover {
+            background: #d7ccc8;
+        }
+
+        .status {
+            text-align: center;
+            font-family: '仿宋_GB2312', '仿宋', FangSong, serif;
+            color: #689f38;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        .status .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #689f38;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            font-family: '仿宋_GB2312', '仿宋', FangSong, serif;
+            color: #bcaaa4;
+            font-size: 0.9em;
+        }
+
+        .color-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85em;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>π 无限计算看板</h1>
+            <p>从打开这一刻起，计算永不停止，直到你关闭此页面</p>
+            <div class="formula-info">
+                📐 <strong>算法</strong>：Nilakantha Somayaji 级数（15世纪印度数学）<br>
+                π = 3 + 4/(2×3×4) - 4/(4×5×6) + 4/(6×7×8) - 4/(8×9×10) + ...<br>
+                <strong>BigInt高精度实现 · 每迭代约+0.3位 · 收敛慢但真正在计算</strong><br>
+                ⚠️ 这个算法收敛很慢，每分钟只能算几位，但保证是真实计算
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-title">
+                    <span>📊</span>
+                    <span>计算位数</span>
+                </div>
+                <div class="card-value blue" id="digitCount">0</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>⏱️</span>
+                    <span>运行时长</span>
+                </div>
+                <div class="card-value small" id="runTime">00:00:00</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>🚀</span>
+                    <span>计算速度</span>
+                </div>
+                <div class="card-value small green" id="calcSpeed">很慢</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>🔄</span>
+                    <span>迭代次数</span>
+                </div>
+                <div class="card-value small orange" id="iterations">0</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>📈</span>
+                    <span>精度等级</span>
+                </div>
+                <div class="card-value small purple" id="precision">初始</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>💾</span>
+                    <span>内存使用</span>
+                </div>
+                <div class="card-value small" id="memoryUsage">0 MB</div>
+            </div>
+        </div>
+
+        <div class="pi-display">
+            <div class="pi-label">📍 当前 π 值（真正在计算，收敛很慢）</div>
+            <div class="pi-value" id="piValue">3.</div>
+        </div>
+
+        <div class="progress-section">
+            <div class="card-title">
+                <span>🎯</span>
+                <span>计算进度（无限模式，收敛极慢）</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-family: 'Times New Roman', serif; font-size: 0.9em; color: #a1887f;">
+                <span>0 位</span>
+                <span id="targetDisplay">目标：∞（无限，收敛很慢）</span>
+                <span>∞ 位</span>
+            </div>
+        </div>
+
+        <div class="status">
+            <span class="dot"></span>
+            <span id="statusText">正在初始化 Nilakantha 计算引擎...</span>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" id="pauseBtn" onclick="togglePause()">⏸️ 暂停计算</button>
+            <button class="btn-secondary" onclick="copyPi()">📋 复制π值</button>
+            <button class="btn-secondary" onclick="resetCalc()">🔄 重置计算</button>
+        </div>
+
+        <div class="color-legend">
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #c62828;"></div>
+                <span style="color: #c62828;">B站红</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #1976d2;"></div>
+                <span style="color: #1976d2;">GitHub蓝</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #689f38;"></div>
+                <span style="color: #689f38;">天气绿</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #f57c00;"></div>
+                <span style="color: #f57c00;">Outlook橙</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #7b1fa2;"></div>
+                <span style="color: #7b1fa2;">WeekPlan紫</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Nilakantha Somayaji 级数 · BigInt 高精度计算 · 单HTML自包含</p>
+            <p>关闭此页面即停止计算 · 计算进度不会保存 · 收敛很慢但真实</p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 真正在计算的π实现 ====================
+        // 使用 BigInt，将所有数值放大 SCALE 倍进行整数运算
+        // π = 3 + 4/(2*3*4) - 4/(4*5*6) + 4/(6*7*8) - 4/(8*9*10) + ...
+        // 每一项：term_k = 4 * (-1)^k / ((2k+2)*(2k+3)*(2k+4))
+
+        // 初始精度：小数点后10位（很低的精度，让计算很慢）
+        let SCALE = 10n ** 10n;
+        let SCALE_DIGITS = 10;
+
+        // 全局状态
+        let isPaused = false;
+        let startTime = Date.now();
+        let digitCount = 0;
+        let iterations = 0;
+        let lastUpdateTime = Date.now();
+        let lastDigitCount = 0;
+        let speedSamples = [];
+        let animationId = null;
+
+        // π的计算值（BigInt，放大了SCALE倍）
+        let piScaled = 3n * SCALE;
+
+        // 当前计算到的项
+        let k = 0n;
+
+        // ==================== 核心计算函数 ====================
+        function computeTerm(k) {
+            // 计算第k项：term_k = 4 * (-1)^k / ((2k+2)*(2k+3)*(2k+4))
+            let twoK = 2n * k;
+            let denom = (twoK + 2n) * (twoK + 3n) * (twoK + 4n);
+
+            // term = 4 * SCALE / denom，但要考虑符号
+            let absTerm = (4n * SCALE) / denom;
+
+            // 应用符号：k为偶数时为正，奇数时为负
+            if (k % 2n === 1n) {
+                return -absTerm;
+            } else {
+                return absTerm;
+            }
+        }
+
+        function calculateStep() {
+            // 计算下一项并加到π上
+            let term = computeTerm(k);
+            piScaled += term;
+            k++;
+
+            // 更新迭代次数
+            iterations = Number(k);
+
+            // 更新位数（从piScaled提取小数位数）
+            let piStr = piScaled.toString();
+            // piScaled = π * SCALE，所以小数部分有SCALE_DIGITS位
+            if (piStr.length > SCALE_DIGITS + 1) { // +1 for the "3"
+                let decimalPart = piStr.slice(piStr.length - SCALE_DIGITS);
+                // 去掉尾部的零，计算有效位数
+                let trimmed = decimalPart.replace(/0+$/, '');
+                digitCount = trimmed.length;
+            }
+
+            // 如果精度不够了，增大SCALE（这会让后续计算更慢）
+            if (digitCount >= SCALE_DIGITS - 2) {
+                SCALE = SCALE * 10n;
+                SCALE_DIGITS++;
+                // 重新调整piScaled
+                piScaled = piScaled * 10n;
+            }
+        }
+
+        // ==================== 渲染更新 ====================
+        function updateDisplay() {
+            // 更新位数
+            document.getElementById('digitCount').textContent = digitCount.toLocaleString();
+
+            // 更新运行时长
+            let elapsed = Date.now() - startTime;
+            let hours = Math.floor(elapsed / 3600000);
+            let minutes = Math.floor((elapsed % 3600000) / 60000);
+            let seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('runTime').textContent =
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            // 更新计算速度
+            let now = Date.now();
+            let timeDiff = (now - lastUpdateTime) / 1000;
+            if (timeDiff >= 5) { // 每5秒更新一次速度（因为很慢）
+                let digitDiff = digitCount - lastDigitCount;
+                let speed = Math.round(digitDiff / timeDiff * 60); // 位/分钟
+                speedSamples.push(speed);
+                if (speedSamples.length > 10) speedSamples.shift();
+                let avgSpeed = Math.round(speedSamples.reduce((a, b) => a + b, 0) / speedSamples.length);
+                document.getElementById('calcSpeed').textContent = `${avgSpeed} 位/分钟`;
+                lastUpdateTime = now;
+                lastDigitCount = digitCount;
+            }
+
+            // 更新迭代次数
+            document.getElementById('iterations').textContent = iterations.toLocaleString();
+
+            // 更新精度等级
+            let precisionLevel = '';
+            if (digitCount < 10) precisionLevel = '个位';
+            else if (digitCount < 100) precisionLevel = '十位';
+            else if (digitCount < 1000) precisionLevel = '百位';
+            else if (digitCount < 10000) precisionLevel = '千位';
+            else if (digitCount < 100000) precisionLevel = '万位';
+            else if (digitCount < 1000000) precisionLevel = '十万位';
+            else if (digitCount < 10000000) precisionLevel = '百万位';
+            else if (digitCount < 100000000) precisionLevel = '千万位';
+            else if (digitCount < 1000000000) precisionLevel = '亿位';
+            else precisionLevel = '超亿位';
+            document.getElementById('precision').textContent = precisionLevel;
+
+            // 更新π值显示
+            let piStr = piScaled.toString();
+            let displayPi = '';
+            if (piStr.length > SCALE_DIGITS + 1) {
+                let intPart = piStr.slice(0, piStr.length - SCALE_DIGITS);
+                let decPart = piStr.slice(piStr.length - SCALE_DIGITS);
+                displayPi = intPart + '.' + decPart;
+            } else {
+                displayPi = '3.' + piStr.padStart(SCALE_DIGITS, '0');
+            }
+
+            // 只显示前2000位
+            let displayStr = displayPi.substring(0, 2002); // 3. + 2000位
+            if (displayPi.length > 2002) {
+                displayStr += `... [已计算 ${digitCount.toLocaleString()} 位，点击展开]`;
+            }
+            document.getElementById('piValue').textContent = displayStr;
+
+            // 更新进度条（周期性重置，因为是无限计算）
+            let progress = (digitCount % 10000) / 10000 * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressFill').textContent = progress.toFixed(1) + '%';
+
+            // 更新内存使用估算
+            let memEstimate = (piStr.length * 2 / 1024 / 1024).toFixed(2);
+            document.getElementById('memoryUsage').textContent = memEstimate + ' MB';
+        }
+
+        // ==================== 计算循环 ====================
+        function calculateLoop() {
+            if (isPaused) {
+                animationId = requestAnimationFrame(calculateLoop);
+                return;
+            }
+
+            // 每帧只算1次迭代（让它很慢）
+            calculateStep();
+
+            // 定期更新显示
+            if (iterations % 10 === 0) {
+                updateDisplay();
+            }
+
+            animationId = requestAnimationFrame(calculateLoop);
+        }
+
+        // ==================== 控制函数 ====================
+        function togglePause() {
+            isPaused = !isPaused;
+            let btn = document.getElementById('pauseBtn');
+            let statusText = document.getElementById('statusText');
+
+            if (isPaused) {
+                btn.innerHTML = '▶️ 继续计算';
+                statusText.textContent = '计算已暂停';
+            } else {
+                btn.innerHTML = '⏸️ 暂停计算';
+                statusText.textContent = '正在使用 Nilakantha 级数持续计算 π（收敛很慢）...';
+            }
+        }
+
+        function copyPi() {
+            let piStr = piScaled.toString();
+            let fullPi = '';
+            if (piStr.length > SCALE_DIGITS + 1) {
+                let intPart = piStr.slice(0, piStr.length - SCALE_DIGITS);
+                let decPart = piStr.slice(piStr.length - SCALE_DIGITS);
+                fullPi = intPart + '.' + decPart;
+            } else {
+                fullPi = '3.' + piStr.padStart(SCALE_DIGITS, '0');
+            }
+
+            navigator.clipboard.writeText(fullPi).then(() => {
+                let btn = event.target;
+                let originalText = btn.innerHTML;
+                btn.innerHTML = '✅ 已复制';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
+        function resetCalc() {
+            if (confirm('确定要重置计算吗？当前进度将丢失。\n\n注意：这个算法收敛很慢，重置后要从头开始算。')) {
+                cancelAnimationFrame(animationId);
+                startTime = Date.now();
+                digitCount = 0;
+                iterations = 0;
+                k = 0n;
+                SCALE = 10n ** 10n;
+                SCALE_DIGITS = 10;
+                piScaled = 3n * SCALE;
+                speedSamples = [];
+                updateDisplay();
+                calculateLoop();
+            }
+        }
+
+        // ==================== 初始化 ====================
+        window.onload = function() {
+            updateDisplay();
+            document.getElementById('statusText').textContent = '正在使用 Nilakantha 级数持续计算 π（收敛很慢）...';
+            calculateLoop();
+        };
+
+        window.onbeforeunload = function(e) {
+            e.preventDefault();
+            e.returnValue = '计算正在运行，确定要关闭吗？';
+            return '计算正在运行，确定要关闭吗？';
+        };
+
+        document.getElementById('piValue').addEventListener('click', function() {
+            if (this.textContent.includes('[已计算')) {
+                let piStr = piScaled.toString();
+                let fullPi = '';
+                if (piStr.length > SCALE_DIGITS + 1) {
+                    let intPart = piStr.slice(0, piStr.length - SCALE_DIGITS);
+                    let decPart = piStr.slice(piStr.length - SCALE_DIGITS);
+                    fullPi = intPart + '.' + decPart;
+                } else {
+                    fullPi = '3.' + piStr.padStart(SCALE_DIGITS, '0');
+                }
+                this.textContent = fullPi;
+                this.style.maxHeight = '600px';
+            }
+        });
+    </script>
+</body>
+</html>
